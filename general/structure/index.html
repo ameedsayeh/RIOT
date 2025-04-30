@@ -98,7 +98,7 @@ top-level directories:</p>
 <p>This directory contains the actual kernel. The kernel consists of the scheduler,
 inter-process-communication (messaging), threading, and thread
 synchronization, as well as supporting data-structures and type definitions.</p>
-<p>See @ref core for further information and API documentations.</p>
+<p>See <a href="https://doc.riot-os.org/group__core.html">Kernel</a> for further information and API documentations.</p>
 <h2 id="boards">boards</h2>
 <p>The platform dependent code is split into two logic elements: CPUs and boards,
 while maintaining a strict 1-to-n relationship, a board has exactly one CPU,
@@ -113,7 +113,7 @@ additionally may include some script and configuration files needed for
 interfacing with the board. These are typically custom flash/debug scripts or
 e.g. OpenOCD configuration files. For most boards, these files are located in a
 <code dir="auto">dist</code> sub-directory of the board.</p>
-<p>See here @ref boards for further information.</p>
+<p>See here <a href="https://doc.riot-os.org/group__boards.html">Boards</a> for further information.</p>
 <h2 id="cpu">cpu</h2>
 <p>For each supported CPU this directory contains a sub-directory with the name of
 the CPU. These directories then contain all CPU specific configurations, such
@@ -122,7 +122,7 @@ startup code, clock initialization code and thread handling (e.g. context
 switching) code. For most CPUs you will also find the linker scripts in the
 <code dir="auto">ldscripts</code> sub-directory.</p>
 <p>In the <code dir="auto">periph</code> sub-directory of each CPU you can find the implementations of
-the CPU’s peripheral drivers like SPI, UART, GPIO, etc.  See @ref drivers_periph
+the CPU’s peripheral drivers like SPI, UART, GPIO, etc.  See <a href="https://doc.riot-os.org/group__drivers__periph.html">Peripheral Driver Interface</a>
 for their API documentation.</p>
 <p>Many CPUs share a certain amount of their code (e.g. all ARM Cortex-M based
 CPUs share the same code for task switching and interrupt handling). This
@@ -130,7 +130,7 @@ shared code is put in its own directories, following a <code dir="auto">xxxxx_co
 scheme. Examples for this is code shared across architectures (e.g.
 <code dir="auto">cortexm_common</code>, <code dir="auto">msp430_comon</code>) or code shared among vendors (e.g.
 <code dir="auto">stm32_common</code>).</p>
-<p>See @ref cpu for more detailed information.</p>
+<p>See <a href="https://doc.riot-os.org/build-system-basics.html#cpu">CPU</a> for more detailed information.</p>
 <h2 id="drivers">drivers</h2>
 <p>This directory contains the drivers for external devices such as network
 interfaces, sensors and actuators. Each device driver is put into its own
@@ -139,7 +139,7 @@ sub-directory with the name of that device.</p>
 GPIO, etc.) and other RIOT modules like the <code dir="auto">xtimer</code>. This way the drivers are
 completely platform agnostic and they don’t have any dependencies into the CPU
 and board code.</p>
-<p>See @ref drivers for more details.</p>
+<p>See <a href="https://doc.riot-os.org/group__drivers.html">Drivers</a> for more details.</p>
 <h2 id="sys">sys</h2>
 <p>RIOT follows a modular design paradigm where everything is supposed to
 be a module. All of these modules that are not part of the hardware abstraction
@@ -147,13 +147,13 @@ nor device drivers can be found in this directory. The libraries include data
 structures (e.g. bloom, color), crypto libraries (e.g. hashes, AES) ,
 high-level APIs (e.g. Posix implementations), memory management (e.g. malloc),
 the RIOT shell and many more.</p>
-<p>See @ref sys for a complete list of available libraries</p>
+<p>See <a href="https://doc.riot-os.org/group__sys.html">System</a> for a complete list of available libraries</p>
 <h2 id="sysnet">sys/net</h2>
 <p>The <code dir="auto">sys/net</code> sub-directory needs to be explicitly mentioned, as this is where
 all the networking code in RIOT resides. Here you can find the network stack
-implementations (e.g. the @ref net_gnrc “GNRC” stack) as well as network stack agnostic code as
+implementations (e.g. the “<a href="https://doc.riot-os.org/group__net__gnrc.html">GNRC</a>” stack) as well as network stack agnostic code as
 header definitions or network types.</p>
-<p>See @ref net for more details on networking code.</p>
+<p>See <a href="https://doc.riot-os.org/group__net.html">Networking</a> for more details on networking code.</p>
 <h2 id="pkg">pkg</h2>
 <p>RIOT comes with support for a number of external libraries (e.g.
 <a href="https://github.com/cn-uofbasel/ccn-lite">ccn-lite</a>,
@@ -162,14 +162,14 @@ that RIOT ships with a custom Makefile for each supported library that
 downloads the library and optionally applies a number of patches to make it
 work with RIOT. These Makefiles and patches can be found in the <code dir="auto">pkg</code>
 directory.</p>
-<p>See @ref pkg for a detailed description on how this works.</p>
+<p>See <a href="https://doc.riot-os.org/group__pkg.html">Packages</a> for a detailed description on how this works.</p>
 <h2 id="examples">examples</h2>
 <p>Here you find a number of example applications that demonstrate certain
 features of RIOT. The default example found in this directory is a good
 starting point for anyone who is new to RIOT.</p>
 <p>For more information best browse that directory and have a look at the
 <code dir="auto">README.md</code> files that ship with each example.</p>
-<p>To create your own application - here or anywhere else - see @ref creating-an-application</p>
+<p>To create your own application - here or anywhere else - see <a href="https://guide.riot-os.org/getting-started/installing/">Setup Development Environment</a></p>
 <h2 id="tests">tests</h2>
 <p>Many features/modules in RIOT come with their own test application, which are
 located in this directory. In contrary to the examples these tests are mostly
