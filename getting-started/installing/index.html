@@ -121,7 +121,7 @@ You will still need a “clone” of the RIOT Repository to work with.</p></div>
 <li>Open the terminal.</li>
 <li>Type <code dir="auto">git clone https://github.com/RIOT-OS/RIOT</code> and confirm with the return-key</li>
 <li>This may take some time. Eventually, it will print <code dir="auto">done.</code> when it completed</li>
-<li>Type <code dir="auto">cd RIOT/examples/hello-world</code> and confirm with the return-key to enter
+<li>Type <code dir="auto">cd RIOT/examples/basic/hello-world</code> and confirm with the return-key to enter
 the folder <code dir="auto">hello-world</code> example app in the RIOT repo</li>
 <li>Type <code dir="auto">make</code> and confirm with the return key to build the app for the board
 <code dir="auto">native</code></li>
@@ -148,15 +148,15 @@ The app should behave the same when run on real hardware.</p></div></aside>
 <p><img src="/_astro/06-Use_VS_Code-00.C7_cFw4K_2urzGh.webp" alt="Ubuntu terminal running make compile-commands in the hello-world app" width="1115" height="628" loading="lazy" decoding="async"></p>
 <ul>
 <li>If not already open, open the terminal</li>
-<li>Confirm that the terminal is pointed to the folder <code dir="auto">~/RIOT/examples/hello-world</code>
+<li>Confirm that the terminal is pointed to the folder <code dir="auto">~/RIOT/examples/basic/hello-world</code>
 <ul>
 <li>The blue part left of the prompt (the <code dir="auto">$</code> sign in the terminal) shows
 the current working directory for the terminal</li>
-<li>If the blue string is not <code dir="auto">~/RIOT/examples/hello-world</code>, type
-<code dir="auto">cd ~/RIOT/examples/hello-world</code> to enter that path</li>
+<li>If the blue string is not <code dir="auto">~/RIOT/examples/basic/hello-world</code>, type
+<code dir="auto">cd ~/RIOT/examples/basic/hello-world</code> to enter that path</li>
 </ul>
 </li>
-<li>Inside <code dir="auto">~/RIOT/examples/hello-world</code> run the command <code dir="auto">make compile-commands</code></li>
+<li>Inside <code dir="auto">~/RIOT/examples/basic/hello-world</code> run the command <code dir="auto">make compile-commands</code></li>
 <li>The output should look like above</li>
 </ul>
 <p><img src="/_astro/06-Use_VS_Code-01.DX94EmEr_SXKTQ.webp" alt="Launching VS Code from Ubuntu" width="1115" height="628" loading="lazy" decoding="async"></p>
@@ -175,7 +175,8 @@ the current working directory for the terminal</li>
 </ol>
 <ul>
 <li>Now, use the tree view in the left and open the <code dir="auto">examples</code> folder</li>
-<li>Open the <code dir="auto">hello-world</code> folder inside the <code dir="auto">examples</code> folder</li>
+<li>Open the <code dir="auto">basic</code> folder inside the <code dir="auto">examples</code> folder</li>
+<li>Open the <code dir="auto">hello-world</code> folder inside the <code dir="auto">basic</code> folder</li>
 <li>Open the <code dir="auto">main.c</code> file in the <code dir="auto">hello-world</code> folder within <code dir="auto">examples</code></li>
 <li>The file should open and look like this:</li>
 </ul>
@@ -212,7 +213,7 @@ working on.</p></div></aside>
 in the source code</li>
 <li>Save the modified source code (e.g. <code dir="auto">Ctrl</code>+<code dir="auto">S</code>)</li>
 <li>Open the integrated terminal by clicking on the terminal tab at the bottom</li>
-<li>Navigate to <code dir="auto">~/RIOT/examples/hello-world</code> using <code dir="auto">cd ~/RIOT/examples/hello-world</code></li>
+<li>Navigate to <code dir="auto">~/RIOT/examples/basic/hello-world</code> using <code dir="auto">cd ~/RIOT/examples/basic/hello-world</code></li>
 <li>Run the <code dir="auto">make</code> command to build the code</li>
 <li>Run make <code dir="auto">make term</code> to launch the application</li>
 <li>The result should look like:</li>
