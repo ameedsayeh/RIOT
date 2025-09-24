@@ -897,6 +897,23 @@ cleanterm: $(TERMDEPS)
 	$(call check_cmd,$(TERMPROG),Terminal program)
 	$(TERMPROG) $(TERMFLAGS) $(TERMTEE)
 
+prepare:
+	@echo "Preparing device..."
+	stty -F $(PORT_LINUX) raw ispeed 1200 ospeed 1200 cs8 -cstopb ignpar eol 255 eof 255
+	@sleep 3
+	@echo "Checking if $(PORT_LINUX) is back..."
+	@for i in 1 2 3 4 5 6 7; do \
+		if [ -e $(PORT_LINUX) ]; then \
+			echo "Device found!"; \
+			exit 0; \
+		else \
+			echo "Device not found, retry $$i..."; \
+			sleep 1; \
+		fi; \
+	done; \
+	echo "Error: $(PORT_LINUX) not found after 7 attempts"; \
+	exit 1
+
 list-ttys:
 	$(Q)$(RIOTTOOLS)/usb-serial/ttys.py
 

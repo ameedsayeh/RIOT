@@ -74,3 +74,4 @@ if [ "${SOFTDEVICE}" != "not found" ]; then
 fi
 
 exit 0
+echo $MOUNTPOINT

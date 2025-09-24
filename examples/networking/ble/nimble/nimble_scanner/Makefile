@@ -3,6 +3,7 @@ APPLICATION = nimble_scanner
 
 # If no BOARD is found in the environment, use this default:
 BOARD ?= nrf52dk
+UF2_SOFTDEV = DROP
 
 # This has to be the absolute path to the RIOT base directory:
 RIOTBASE ?= $(CURDIR)/../../../../..
