@@ -1,8 +1,11 @@
 PKG_NAME    = nimble
-# PKG_SOURCE_LOCAL/home/ameedsayeh/mynewt-nimble
 PKG_URL     = https://github.com/apache/mynewt-nimble.git
 PKG_VERSION = 719bd3c435b728f07ce7aaffaf6cebbd9c659a46
 PKG_LICENSE = Apache-2.0
+
+# Overrides the remote PKG
+PKG_SOURCE_LOCAL = /home/ameedsayeh/mynewt-nimble
+
 
 include $(RIOTBASE)/pkg/pkg.mk
 
