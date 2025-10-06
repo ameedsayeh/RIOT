@@ -135,7 +135,7 @@ void ble_start_scan(void)
 int advertise_callback(struct ble_gap_event *event, void *arg)
 {
     (void)arg;
-    printf("# GAP event %i\n", (int)event->type);
+    // printf("# ADV GAP event %i\n", (int)event->type);
 
     switch (event->type) {
     case BLE_GAP_EVENT_CONNECT:
@@ -160,6 +160,17 @@ int advertise_callback(struct ble_gap_event *event, void *arg)
                                   BLE_CONN_STATE_DISCONNECTED);
         }
         break;
+    case BLE_GAP_EVENT_NOTIFY_TX:
+        printf("[Notification TX complete] ADV_CB\n %d", event->notify_tx.attr_handle);
+        break;
+    case BLE_GAP_EVENT_NOTIFY_RX:
+        printf("[Notification RX complete] ADV_CB\n %d", event->notify_rx.attr_handle);
+        // Print received data
+        for (int i = 0; i < event->notify_rx.om->om_len; i++) {
+            printf("%02X ", ((uint8_t *)event->notify_rx.om->om_data)[i]);
+        }
+        printf("\n");
+        break;
     default:
         break;
     }
@@ -169,7 +180,7 @@ int advertise_callback(struct ble_gap_event *event, void *arg)
 int connect_callback(struct ble_gap_event *event, void *arg)
 {
     (void)arg;
-    printf("# GAP event %i\n", (int)event->type);
+    printf("# CNCT GAP event %i\n", (int)event->type);
 
     switch (event->type) {
     case BLE_GAP_EVENT_CONNECT:
@@ -191,6 +202,17 @@ int connect_callback(struct ble_gap_event *event, void *arg)
             ble_conn_update_state(&conn->addr, BLE_HS_CONN_HANDLE_NONE,
                                   BLE_CONN_STATE_DISCONNECTED);
         }
+        break;
+    case BLE_GAP_EVENT_NOTIFY_TX:
+        printf("[Notification TX complete] ADV_CB\n %d", event->notify_tx.attr_handle);
+        break;
+    case BLE_GAP_EVENT_NOTIFY_RX:
+        printf("[Notification RX complete] ADV_CB\n %d", event->notify_rx.attr_handle);
+        // Print received data
+        for (int i = 0; i < event->notify_rx.om->om_len; i++) {
+            printf("%02X ", ((uint8_t *)event->notify_rx.om->om_data)[i]);
+        }
+        printf("\n");
         break;
     default:
         break;

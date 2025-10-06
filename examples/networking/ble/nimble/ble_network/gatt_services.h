@@ -63,4 +63,21 @@ int write_access_cb(uint16_t conn_handle, uint16_t attr_handle,
  */
 int gatt_services_init(void);
 
+/**
+ * @brief Send notification to a connected peer
+ * @param conn_handle Connection handle
+ * @param data Data to send
+ * @param len Length of data
+ * @return 0 on success, error code otherwise
+ */
+int gatt_send_notification(uint16_t conn_handle, const void *data, size_t len);
+
+/**
+ * @brief Get the last received message
+ * @param buffer Buffer to store the message
+ * @param max_len Maximum buffer length
+ * @return Length of message copied, 0 if no message
+ */
+size_t gatt_get_last_message(char *buffer, size_t max_len);
+
 #endif /* GATT_SERVICES_H */

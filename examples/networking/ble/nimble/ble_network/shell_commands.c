@@ -6,8 +6,10 @@
 #include "shell_commands.h"
 #include "ble_connection.h"
 #include "config.h"
+#include "gatt_services.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <host/ble_gap.h>
 
@@ -113,6 +115,63 @@ int cmd_list(int argc, char **argv)
     return 0;
 }
 
+int cmd_send(int argc, char **argv)
+{
+    if (argc < 3) {
+        puts("usage: send <handle> <message>");
+        puts("  handle: connection handle number");
+        puts("  message: text message to send");
+        return 1;
+    }
+
+    uint16_t conn_handle = (uint16_t)atoi(argv[1]);
+    const char *message = argv[2];
+
+    /* Concatenate all remaining arguments as the message */
+    static char full_message[128];
+    int offset = 0;
+    for (int i = 2; i < argc && offset < sizeof(full_message) - 1; i++) {
+        if (i > 2) {
+            full_message[offset++] = ' ';
+        }
+        int len = strlen(argv[i]);
+        if (offset + len < sizeof(full_message) - 1) {
+            strcpy(&full_message[offset], argv[i]);
+            offset += len;
+        }
+    }
+    full_message[offset] = '\0';
+
+    int rc = gatt_send_notification(conn_handle, full_message, strlen(full_message));
+    if (rc == 0) {
+        printf("Message sent to handle %d: %s\n", conn_handle, full_message);
+    }
+    else {
+        printf("Failed to send message to handle %d\n", conn_handle);
+    }
+    return (rc == 0) ? 0 : 1;
+}
+
+int cmd_show_msg(int argc, char **argv)
+{
+    (void)argv;
+    if (argc != 1) {
+        puts("usage: showmsg");
+        return 1;
+    }
+
+    char buffer[128];
+    size_t len = gatt_get_last_message(buffer, sizeof(buffer));
+
+    if (len > 0) {
+        printf("Last received message: %s\n", buffer);
+    }
+    else {
+        puts("No messages received yet");
+    }
+    return 0;
+}
+
 /* ========================================================================
  * Shell Commands Array
  * ======================================================================== */
@@ -122,6 +181,8 @@ static const shell_command_t shell_commands[] = {
     { "adds", "Add slave BLE address", cmd_adds },
     { "rm", "Remove BLE address", cmd_rm },
     { "list", "List connections", cmd_list },
+    { "send", "Send message to connection handle", cmd_send },
+    { "showmsg", "Show last received message", cmd_show_msg },
     { NULL, NULL, NULL }
 };
 

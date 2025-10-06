@@ -22,6 +22,13 @@
 uint16_t custom_notify_data_val_handle;
 uint16_t custom_write_data_val_handle;
 
+/* Message storage */
+#define MAX_MESSAGE_LEN 128
+static char last_received_message[MAX_MESSAGE_LEN];
+static size_t last_message_len = 0;
+static char notification_buffer[MAX_MESSAGE_LEN];
+static size_t notification_len = 0;
+
 /* ========================================================================
  * GATT Characteristic Access Callbacks
  * ======================================================================== */
@@ -76,17 +83,22 @@ int write_access_cb(uint16_t conn_handle, uint16_t attr_handle,
         printf("[GATT] Write characteristic write: len=%d\n",
                OS_MBUF_PKTLEN(ctxt->om));
 
-        /* Print received data */
+        /* Store received data */
         struct os_mbuf *om = ctxt->om;
-        uint8_t buf[256];
         int len = OS_MBUF_PKTLEN(om);
-        if (len > sizeof(buf) - 1) {
-            len = sizeof(buf) - 1;
+        if (len > MAX_MESSAGE_LEN - 1) {
+            len = MAX_MESSAGE_LEN - 1;
         }
 
-        if (os_mbuf_copydata(om, 0, len, buf) == 0) {
-            buf[len] = '\0';
-            printf("[GATT] Received data: %s\n", buf);
+        if (os_mbuf_copydata(om, 0, len, (uint8_t *)last_received_message) == 0) {
+            last_received_message[len] = '\0';
+            last_message_len = len;
+            printf("[GATT] Received from conn_handle %d: %s\n", conn_handle, last_received_message);
+
+            /* Echo back via notification if possible */
+            char response[MAX_MESSAGE_LEN];
+            snprintf(response, sizeof(response), "Echo: %s", last_received_message);
+            gatt_send_notification(conn_handle, response, strlen(response));
         }
 
         return 0;
@@ -165,4 +177,42 @@ int gatt_services_init(void)
            CUSTOM_WRITE_CHR_UUID, custom_write_data_val_handle);
 
     return 0;
+}
+
+/* ========================================================================
+ * Communication Functions
+ * ======================================================================== */
+
+int gatt_send_notification(uint16_t conn_handle, const void *data, size_t len)
+{
+    if (len > MAX_MESSAGE_LEN) {
+        len = MAX_MESSAGE_LEN;
+    }
+
+    struct os_mbuf *om = ble_hs_mbuf_from_flat(data, len);
+    if (!om) {
+        printf("[GATT] Failed to allocate mbuf for notification\n");
+        return -1;
+    }
+
+    int rc = ble_gattc_notify_custom(conn_handle, custom_notify_data_val_handle, om);
+    if (rc != 0) {
+        printf("[GATT] Failed to send notification to handle %d: %d\n", conn_handle, rc);
+        return rc;
+    }
+
+    printf("[GATT] Sent notification to handle %d: %.*s\n", conn_handle, (int)len, (const char *)data);
+    return 0;
+}
+
+size_t gatt_get_last_message(char *buffer, size_t max_len)
+{
+    if (last_message_len == 0 || !buffer) {
+        return 0;
+    }
+
+    size_t copy_len = (last_message_len < max_len - 1) ? last_message_len : max_len - 1;
+    memcpy(buffer, last_received_message, copy_len);
+    buffer[copy_len] = '\0';
+    return copy_len;
 }
