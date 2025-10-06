@@ -25,7 +25,8 @@
         "tuple": "c",
         "type_traits": "c",
         "utility": "c",
-        "typeinfo": "c"
+        "typeinfo": "c",
+        "string.h": "c"
     },
     "[shellscript][c][cpp]": {
         "editor.tabSize": 4,

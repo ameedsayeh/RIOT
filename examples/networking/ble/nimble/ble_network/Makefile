@@ -23,18 +23,6 @@ DEVELHELP ?= 1
 QUIET ?= 1
 WERROR = 0
 
-FE:E1:13:54:7B:D8
-
-C8:C2:EE:58:40:42
-
-C3:3F:0C:B3:24:B4
-
-E4:AE:C5:FA:3A:46
-
-D9:87:11:41:43:5E
-
-
-# MAC Setup for testing
 # Per-port configuration
 ifeq ($(PORT_LINUX),/dev/ttyACM0)
     DEVICE_LIST = X("C8:C2:EE:58:40:42","Master") \
@@ -43,28 +31,28 @@ ifeq ($(PORT_LINUX),/dev/ttyACM0)
                   X("D9:87:11:41:43:5E","Slave")
 endif
 
-ifeq ($(PORT),/dev/ttyACM1)
+ifeq ($(PORT_LINUX),/dev/ttyACM1)
     DEVICE_LIST = X("FE:E1:13:54:7B:D8","Slave") \
                   X("C3:3F:0C:B3:24:B4","Master") \
                   X("E4:AE:C5:FA:3A:46","Slave") \
                   X("D9:87:11:41:43:5E","Master")
 endif
 
-ifeq ($(PORT),/dev/ttyACM2)
+ifeq ($(PORT_LINUX),/dev/ttyACM2)
     DEVICE_LIST = X("FE:E1:13:54:7B:D8","Master") \
                   X("C8:C2:EE:58:40:42","Slave") \
                   X("E4:AE:C5:FA:3A:46","Master") \
                   X("D9:87:11:41:43:5E","Slave")
 endif
 
-ifeq ($(PORT),/dev/ttyACM3)
+ifeq ($(PORT_LINUX),/dev/ttyACM3)
     DEVICE_LIST = X("FE:E1:13:54:7B:D8","Slave") \
                   X("C8:C2:EE:58:40:42","Master") \
                   X("C3:3F:0C:B3:24:B4","Slave") \
                   X("D9:87:11:41:43:5E","Master")
 endif
 
-ifeq ($(PORT),/dev/ttyACM4)
+ifeq ($(PORT_LINUX),/dev/ttyACM4)
     DEVICE_LIST = X("FE:E1:13:54:7B:D8","Master") \
                   X("C8:C2:EE:58:40:42","Slave") \
                   X("C3:3F:0C:B3:24:B4","Master") \
