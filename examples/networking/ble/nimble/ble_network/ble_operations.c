@@ -6,6 +6,7 @@
 #include "ble_operations.h"
 #include "ble_connection.h"
 #include "config.h"
+#include "gatt_services.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -82,7 +83,7 @@ void ble_start_advertise(void)
     fields.name_len = strlen(get_device_name());
     fields.name_is_complete = 1;
     /* Setting SVCs IDs */
-    fields.uuids16 = (ble_uuid16_t[]){ BLE_UUID16_INIT(BLE_SVC_UUID) };
+    fields.uuids16 = (ble_uuid16_t[]){ BLE_UUID16_INIT(CUSTOM_SVC_UUID) };
     fields.num_uuids16 = 1;
     fields.uuids16_is_complete = 1;
 

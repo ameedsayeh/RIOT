@@ -5,6 +5,7 @@
 
 #include "config.h"
 #include "ble_connection.h"
+#include "gatt_services.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -77,6 +78,14 @@ void init_ble(void)
         printf("Error setting device name: %d\n", rc);
     }
     assert(rc == 0);
+
+    /* Initialize GATT services */
+    rc = gatt_services_init();
+    if (rc != 0) {
+        printf("GATT services initialization failed: %d\n", rc);
+        return;
+    }
+
     rc = ble_hs_util_ensure_addr(0);
     assert(rc == 0);
     rc = ble_hs_id_infer_auto(0, &addr_type);

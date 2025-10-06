@@ -16,6 +16,7 @@
 #include "ble_connection.h"
 #include "ble_operations.h"
 #include "shell_commands.h"
+#include "gatt_services.h"
 
 /* ========================================================================
  * Global Variables

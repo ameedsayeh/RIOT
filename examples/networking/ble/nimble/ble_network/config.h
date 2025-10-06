@@ -23,10 +23,7 @@
 #define CONN_ITVL       (75U)  /* Connection interval */
 #define CONN_TIMEOUT_MS (600U) /* Connection timeout */
 
-/* BLE service and characteristic UUIDs */
-#define BLE_SVC_UUID    0xff00 /* Custom service UUID */
-#define NOTIFY_CHR_UUID 0xee00 /* Notification characteristic UUID */
-#define WRITE_CHR_UUID  0xee01 /* Write characteristic UUID */
+/* Note: BLE service and characteristic UUIDs are defined in gatt_services.h */
 
 /* ========================================================================
  * Device Configuration Structure
@@ -81,5 +78,11 @@ const char *get_device_name(void);
  * @return Address type
  */
 uint8_t get_addr_type(void);
+
+/**
+ * @brief Initialize GATT services (declared here for config module use)
+ * @return 0 on success, error code otherwise
+ */
+int gatt_services_init(void);
 
 #endif /* CONFIG_H */
