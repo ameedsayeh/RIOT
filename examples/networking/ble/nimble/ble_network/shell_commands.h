@@ -45,28 +45,12 @@ int cmd_rm(int argc, char **argv);
 int cmd_list(int argc, char **argv);
 
 /**
- * @brief Send message to a specific connection
+ * @brief Start sync process with a specific connection
  * @param argc Argument count
  * @param argv Argument vector
  * @return 0 on success, 1 on error
  */
-int cmd_send(int argc, char **argv);
-
-/**
- * @brief Show last received message
- * @param argc Argument count
- * @param argv Argument vector
- * @return 0 on success, 1 on error
- */
-int cmd_show_msg(int argc, char **argv);
-
-/**
- * @brief List current GATT subscriptions
- * @param argc Argument count
- * @param argv Argument vector
- * @return 0 on success, 1 on error
- */
-int cmd_subscriptions(int argc, char **argv);
+int cmd_sync(int argc, char **argv);
 
 /**
  * @brief Get shell commands array

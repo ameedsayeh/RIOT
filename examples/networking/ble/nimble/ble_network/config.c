@@ -96,7 +96,7 @@ void init_ble(void)
 
 void load_connections(void)
 {
-    printf("Found %zu devices:\n", devices_count);
+    printf("Found in configs: %zu devices:\n", devices_count);
     for (size_t i = 0; i < devices_count; i++) {
         printf("  [%zu] MAC: %s, Role: %s\n",
                i + 1, devices[i].mac, devices[i].role);

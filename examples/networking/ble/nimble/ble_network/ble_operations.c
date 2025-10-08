@@ -7,6 +7,7 @@
 #include "ble_connection.h"
 #include "config.h"
 #include "gatt_services.h"
+#include "messages.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -132,10 +133,30 @@ void ble_start_scan(void)
     ble_stop_scan();
 }
 
+static int
+mtu_callback(uint16_t conn_handle, const struct ble_gatt_error *error,
+             uint16_t mtu, void *arg)
+{
+    switch (error->status) {
+    case 0:
+        printf("mtu exchange complete: conn_handle=%d mtu=%d\n",
+               conn_handle, mtu);
+        break;
+
+    default:
+        printf("MTU exchange failed: conn_handle=%d status=%d\n",
+               conn_handle, error->status);
+        break;
+    }
+
+    return 0;
+}
+
 int advertise_callback(struct ble_gap_event *event, void *arg)
 {
     (void)arg;
-    // printf("# ADV GAP event %i\n", (int)event->type);
+
+    uint32_t timestamp;
 
     switch (event->type) {
     case BLE_GAP_EVENT_CONNECT:
@@ -150,6 +171,8 @@ int advertise_callback(struct ble_gap_event *event, void *arg)
             ble_conn_update_state(&desc.peer_ota_addr, event->connect.conn_handle,
                                   BLE_CONN_STATE_CONNECTED);
         }
+
+        ble_gattc_exchange_mtu(event->connect.conn_handle, mtu_callback, NULL);
         break;
     case BLE_GAP_EVENT_DISCONNECT:
         /* Update connection state */
@@ -161,15 +184,14 @@ int advertise_callback(struct ble_gap_event *event, void *arg)
         }
         break;
     case BLE_GAP_EVENT_NOTIFY_TX:
-        printf("[Notification TX complete] ADV_CB\n %d", event->notify_tx.attr_handle);
+        /* Record timestamp when notification was sent */
+        timestamp = ztimer_now(ZTIMER_MSEC);
+        handle_sync_tx_event(event->notify_tx.conn_handle, timestamp);
         break;
     case BLE_GAP_EVENT_NOTIFY_RX:
-        printf("[Notification RX complete] ADV_CB\n %d", event->notify_rx.attr_handle);
-        // Print received data
-        for (int i = 0; i < event->notify_rx.om->om_len; i++) {
-            printf("%02X ", ((uint8_t *)event->notify_rx.om->om_data)[i]);
-        }
-        printf("\n");
+        /* Record timestamp when notification was received */
+        timestamp = ztimer_now(ZTIMER_MSEC);
+        handle_sync_rx_event(event->notify_rx.conn_handle, event->notify_rx.om, timestamp);
         break;
     default:
         break;
@@ -180,8 +202,7 @@ int advertise_callback(struct ble_gap_event *event, void *arg)
 int connect_callback(struct ble_gap_event *event, void *arg)
 {
     (void)arg;
-    printf("# CNCT GAP event %i\n", (int)event->type);
-
+    uint32_t timestamp;
     switch (event->type) {
     case BLE_GAP_EVENT_CONNECT:
         if (event->connect.status != 0) {
@@ -194,6 +215,7 @@ int connect_callback(struct ble_gap_event *event, void *arg)
             ble_conn_update_state(&desc.peer_ota_addr, event->connect.conn_handle,
                                   BLE_CONN_STATE_CONNECTED);
         }
+
         break;
     case BLE_GAP_EVENT_DISCONNECT:
         printf("[Disconnected] CNCT_CB\n");
@@ -204,15 +226,14 @@ int connect_callback(struct ble_gap_event *event, void *arg)
         }
         break;
     case BLE_GAP_EVENT_NOTIFY_TX:
-        printf("[Notification TX complete] ADV_CB\n %d", event->notify_tx.attr_handle);
+        /* Record timestamp when notification was sent */
+        timestamp = ztimer_now(ZTIMER_MSEC);
+        handle_sync_tx_event(event->notify_tx.conn_handle, timestamp);
         break;
     case BLE_GAP_EVENT_NOTIFY_RX:
-        printf("[Notification RX complete] ADV_CB\n %d", event->notify_rx.attr_handle);
-        // Print received data
-        for (int i = 0; i < event->notify_rx.om->om_len; i++) {
-            printf("%02X ", ((uint8_t *)event->notify_rx.om->om_data)[i]);
-        }
-        printf("\n");
+        /* Record timestamp when notification was received */
+        timestamp = ztimer_now(ZTIMER_MSEC);
+        handle_sync_rx_event(event->notify_rx.conn_handle, event->notify_rx.om, timestamp);
         break;
     default:
         break;

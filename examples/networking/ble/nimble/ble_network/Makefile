@@ -14,6 +14,7 @@ USEMODULE += shell
 USEMODULE += random
 USEMODULE += nimble_svc_gap
 USEMODULE += nimble_svc_gatt
+USEMODULE += ztimer_usec
 
 CFLAGS += -DMYNEWT_VAL_BLE_MAX_CONNECTIONS=10
 

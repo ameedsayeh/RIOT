@@ -31,7 +31,9 @@ static char _conn_mgr_stack[THREAD_STACKSIZE_DEFAULT];
 
 int main(void)
 {
-    /* Initialize message queue */
+    ztimer_sleep(ZTIMER_MSEC, 5000); /* wait for console to be ready */
+                                     /* Initialize message queue */
+
     msg_init_queue(_main_msg_queue, MAIN_QUEUE_SIZE);
 
     /* Initialize BLE connection management */

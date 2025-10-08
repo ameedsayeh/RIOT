@@ -5,61 +5,61 @@
 
 #include "gatt_services.h"
 #include "config.h"
+#include "messages.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <stdbool.h>
 #include <host/ble_hs.h>
 #include <host/ble_gatt.h>
 #include <services/gap/ble_svc_gap.h>
 #include <services/gatt/ble_svc_gatt.h>
+#include "ztimer.h"
 
 /* ========================================================================
  * Global Variables
  * ======================================================================== */
 
 /* Value handles for GATT characteristics */
-uint16_t custom_notify_data_val_handle;
 uint16_t custom_write_data_val_handle;
 
 /* Message storage */
 #define MAX_MESSAGE_LEN 128
-static char last_received_message[MAX_MESSAGE_LEN];
-static size_t last_message_len = 0;
-static char notification_buffer[MAX_MESSAGE_LEN];
-static size_t notification_len = 0;
+
+/* Time synchronization state */
+static uint32_t stored_tx1 = 0;
+static uint32_t stored_tx2 = 0;
+// static uint16_t sync_conn_handle = 0;
+static bool sync_active = false;
+
+/* Thread data structure for sending messages */
+typedef struct {
+    uint16_t conn_handle;
+    tsync_msg msg;
+} send_thread_data_t;
+
+/* Single thread stack and data */
+static char send_thread_stack[THREAD_STACKSIZE_DEFAULT];
+static send_thread_data_t thread_data;
+
+/* Thread function for sending messages */
+static void *send_msg_thread(void *arg)
+{
+    send_thread_data_t *data = (send_thread_data_t *)arg;
+
+    // printf("[THREAD] Sending message in new thread for handle %d\n", data->conn_handle);
+    int rc = send_tsync_msg(data->conn_handle, data->msg);
+    if (rc != 0) {
+        printf("[THREAD] Failed to send message: %d\n", rc);
+    }
+
+    return NULL;
+}
 
 /* ========================================================================
  * GATT Characteristic Access Callbacks
  * ======================================================================== */
-
-int notify_access_cb(uint16_t conn_handle, uint16_t attr_handle,
-                     struct ble_gatt_access_ctxt *ctxt, void *arg)
-{
-    (void)conn_handle;
-    (void)attr_handle;
-    (void)arg;
-
-    switch (ctxt->op) {
-    case BLE_GATT_ACCESS_OP_READ_CHR:
-        printf("[GATT] Notify characteristic read\n");
-        /* Return some dummy data for notification */
-        {
-            static const char *notify_data = "Hello from notify!";
-            int rc = os_mbuf_append(ctxt->om, notify_data, strlen(notify_data));
-            return (rc == 0) ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
-        }
-        break;
-
-    case BLE_GATT_ACCESS_OP_WRITE_CHR:
-        printf("[GATT] Notify characteristic write (not supported)\n");
-        return BLE_ATT_ERR_WRITE_NOT_PERMITTED;
-
-    default:
-        printf("[GATT] Notify characteristic: unexpected access op %d\n", ctxt->op);
-        return BLE_ATT_ERR_UNLIKELY;
-    }
-}
 
 int write_access_cb(uint16_t conn_handle, uint16_t attr_handle,
                     struct ble_gatt_access_ctxt *ctxt, void *arg)
@@ -68,45 +68,7 @@ int write_access_cb(uint16_t conn_handle, uint16_t attr_handle,
     (void)attr_handle;
     (void)arg;
 
-    switch (ctxt->op) {
-    case BLE_GATT_ACCESS_OP_READ_CHR:
-        printf("[GATT] Write characteristic read\n");
-        /* Return current write buffer content */
-        {
-            static const char *write_data = "Write buffer";
-            int rc = os_mbuf_append(ctxt->om, write_data, strlen(write_data));
-            return (rc == 0) ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
-        }
-        break;
-
-    case BLE_GATT_ACCESS_OP_WRITE_CHR:
-        printf("[GATT] Write characteristic write: len=%d\n",
-               OS_MBUF_PKTLEN(ctxt->om));
-
-        /* Store received data */
-        struct os_mbuf *om = ctxt->om;
-        int len = OS_MBUF_PKTLEN(om);
-        if (len > MAX_MESSAGE_LEN - 1) {
-            len = MAX_MESSAGE_LEN - 1;
-        }
-
-        if (os_mbuf_copydata(om, 0, len, (uint8_t *)last_received_message) == 0) {
-            last_received_message[len] = '\0';
-            last_message_len = len;
-            printf("[GATT] Received from conn_handle %d: %s\n", conn_handle, last_received_message);
-
-            /* Echo back via notification if possible */
-            char response[MAX_MESSAGE_LEN];
-            snprintf(response, sizeof(response), "Echo: %s", last_received_message);
-            gatt_send_notification(conn_handle, response, strlen(response));
-        }
-
-        return 0;
-
-    default:
-        printf("[GATT] Write characteristic: unexpected access op %d\n", ctxt->op);
-        return BLE_ATT_ERR_UNLIKELY;
-    }
+    printf("[GATT] Write characteristic access callback op=%d\n", ctxt->op);
 }
 
 /* ========================================================================
@@ -118,13 +80,6 @@ const struct ble_gatt_svc_def gatt_svcs[] = {
       .type = BLE_GATT_SVC_TYPE_PRIMARY,
       .uuid = BLE_UUID16_DECLARE(CUSTOM_SVC_UUID),
       .characteristics = (struct ble_gatt_chr_def[]){
-          {
-              /* Custom Notify Characteristic */
-              .uuid = BLE_UUID16_DECLARE(CUSTOM_NOTIFY_CHR_UUID),
-              .access_cb = notify_access_cb,
-              .val_handle = &custom_notify_data_val_handle,
-              .flags = BLE_GATT_CHR_F_NOTIFY | BLE_GATT_CHR_F_READ,
-          },
           {
               /* Custom Write Characteristic */
               .uuid = BLE_UUID16_DECLARE(CUSTOM_WRITE_CHR_UUID),
@@ -169,13 +124,6 @@ int gatt_services_init(void)
         return rc;
     }
 
-    printf("GATT services initialized successfully\n");
-    printf("  - Custom Service UUID: 0x%04X\n", CUSTOM_SVC_UUID);
-    printf("  - Notify Characteristic UUID: 0x%04X (handle: %d)\n",
-           CUSTOM_NOTIFY_CHR_UUID, custom_notify_data_val_handle);
-    printf("  - Write Characteristic UUID: 0x%04X (handle: %d)\n",
-           CUSTOM_WRITE_CHR_UUID, custom_write_data_val_handle);
-
     return 0;
 }
 
@@ -183,36 +131,151 @@ int gatt_services_init(void)
  * Communication Functions
  * ======================================================================== */
 
-int gatt_send_notification(uint16_t conn_handle, const void *data, size_t len)
+int start_sync(uint16_t conn_handle)
 {
-    if (len > MAX_MESSAGE_LEN) {
-        len = MAX_MESSAGE_LEN;
-    }
+    /* Initialize sync protocol */
+    stored_tx1 = 0;
+    stored_tx2 = 0;
 
-    struct os_mbuf *om = ble_hs_mbuf_from_flat(data, len);
+    sync_active = true;
+
+    /* Create initial message with all zeros */
+    tsync_msg msg = { .tx1 = 0, .tx2 = 0, .rx1 = 0, .rx2 = 0 };
+    return send_tsync_msg(conn_handle, msg);
+}
+
+int send_tsync_msg(uint16_t conn_handle, tsync_msg msg)
+{
+    size_t len = sizeof(tsync_msg);
+    struct os_mbuf *om;
+
+    /* Convert struct to mbuf */
+    om = ble_hs_mbuf_from_flat(&msg, len);
+
     if (!om) {
         printf("[GATT] Failed to allocate mbuf for notification\n");
         return -1;
     }
 
-    int rc = ble_gattc_notify_custom(conn_handle, custom_notify_data_val_handle, om);
+    int rc = ble_gattc_notify_custom(conn_handle, custom_write_data_val_handle, om);
     if (rc != 0) {
-        printf("[GATT] Failed to send notification to handle %d: %d\n", conn_handle, rc);
+        printf("[GATT] Failed to send data to handle %d: %d\n", conn_handle, rc);
         return rc;
     }
 
-    printf("[GATT] Sent notification to handle %d: %.*s\n", conn_handle, (int)len, (const char *)data);
+    // printf("[GATT] Sent data to handle %d\n", conn_handle);
     return 0;
 }
 
-size_t gatt_get_last_message(char *buffer, size_t max_len)
+/* ========================================================================
+ * Time Synchronization Protocol Functions
+ * ======================================================================== */
+
+void handle_sync_tx_event(uint16_t conn_handle, uint32_t timestamp)
 {
-    if (last_message_len == 0 || !buffer) {
-        return 0;
+    if (stored_tx1 == 0 && sync_active) {
+        /* This is the first message being sent */
+        stored_tx1 = timestamp;
+        // printf("[SYNC] TX1 recorded: %lu\n", (unsigned long)stored_tx1);
+        // printf("[SYNC] TX1 recorded: %lu (first message sent)\n", (unsigned long)stored_tx1);
+    }
+    else if (!sync_active) {
+        /* This is the second message being sent (response) */
+        stored_tx2 = timestamp;
+        // printf("[SYNC] TX2 recorded: %lu\n", (unsigned long)stored_tx2);
+        // printf("[SYNC] TX2 recorded: %lu (response sent)\n", (unsigned long)stored_tx2);
+    }
+}
+
+void handle_sync_rx_event(uint16_t conn_handle, struct os_mbuf *om, uint32_t timestamp)
+{
+    /* Parse the received tsync message */
+    tsync_msg received_msg;
+    uint16_t copy_len;
+
+    int rc = ble_hs_mbuf_to_flat(om, &received_msg, sizeof(tsync_msg), &copy_len);
+    if (rc != 0 || copy_len != sizeof(tsync_msg)) {
+        printf("[SYNC] Failed to decode tsync message\n");
+        return;
     }
 
-    size_t copy_len = (last_message_len < max_len - 1) ? last_message_len : max_len - 1;
-    memcpy(buffer, last_received_message, copy_len);
-    buffer[copy_len] = '\0';
-    return copy_len;
+    // printf("[SYNC] Received message from handle %d: ", conn_handle);
+    // tsync_msg_print(&received_msg);
+
+    /* Check which stage of the protocol we're in */
+    if (received_msg.tx1 == 0 && received_msg.tx2 == 0 &&
+        received_msg.rx1 == 0 && received_msg.rx2 == 0) {
+        /* First message received - respond with rx2 filled */
+        // printf("[SYNC] RX2 recorded: %lu (first message received)\n", (unsigned long)timestamp);
+
+        thread_data.conn_handle = conn_handle;
+        thread_data.msg = (tsync_msg){ .tx1 = 0, .tx2 = 0, .rx1 = 0, .rx2 = timestamp };
+
+        kernel_pid_t pid = thread_create(send_thread_stack, sizeof(send_thread_stack),
+                                         THREAD_PRIORITY_MAIN - 1, 0,
+                                         send_msg_thread, &thread_data, "send_msg");
+        if (pid <= KERNEL_PID_UNDEF) {
+            printf("[SYNC] Failed to create send thread\n");
+        }
+    }
+    else if (received_msg.tx1 != 0 && received_msg.rx1 != 0 && received_msg.rx2 != 0 && received_msg.tx2 == 0) {
+        /* Third message received - complete the protocol */
+        // printf("[SYNC] Final message received, completing protocol\n");
+
+        thread_data.conn_handle = conn_handle;
+        thread_data.msg = received_msg;
+        thread_data.msg.tx2 = stored_tx2; /* Add our stored tx2 */
+
+        // printf("[SYNC] Sending final message: ");
+        // tsync_msg_print(&thread_data.msg);
+
+        // ((rx2-tx1) + (tx2-rx1)) / 2
+        tsync_msg_print(&thread_data.msg);
+        uint32_t sync_offset = ((stored_tx2 - received_msg.tx1) + (received_msg.tx2 - received_msg.rx1)) / 2;
+        printf("%lu\n", (unsigned long)sync_offset);
+
+        kernel_pid_t pid = thread_create(send_thread_stack, sizeof(send_thread_stack),
+                                         THREAD_PRIORITY_MAIN - 1, 0,
+                                         send_msg_thread, &thread_data, "send_msg");
+        if (pid <= KERNEL_PID_UNDEF) {
+            printf("[SYNC] Failed to create send thread\n");
+        }
+        stored_tx1 = 0;
+        stored_tx2 = 0;
+        sync_active = false;
+    }
+    else if (received_msg.rx2 != 0 && received_msg.tx1 == 0 && received_msg.rx1 == 0 && received_msg.tx2 == 0) {
+        /* Second message received - add rx1 and tx1, send back */
+        // printf("[SYNC] RX1 recorded: %lu (response received)\n", (unsigned long)timestamp);
+
+        thread_data.conn_handle = conn_handle;
+        thread_data.msg = received_msg;
+        thread_data.msg.tx1 = stored_tx1;
+        thread_data.msg.rx1 = timestamp;
+
+        // printf("[SYNC] Sending third message: ");
+        // tsync_msg_print(&thread_data.msg);
+
+        kernel_pid_t pid = thread_create(send_thread_stack, sizeof(send_thread_stack),
+                                         THREAD_PRIORITY_MAIN - 1, 0,
+                                         send_msg_thread, &thread_data, "send_msg");
+        if (pid <= KERNEL_PID_UNDEF) {
+            printf("[SYNC] Failed to create send thread\n");
+        }
+    }
+    else if (received_msg.tx1 != 0 && received_msg.tx2 != 0 &&
+             received_msg.rx1 != 0 && received_msg.rx2 != 0) {
+        /* Final complete message received */
+        // printf("[SYNC] Complete synchronization message received:\n");
+        // tsync_msg_print(&received_msg);
+
+        // ((rx2-tx1) + (tx2-rx1)) / 2
+        tsync_msg_print(&received_msg);
+        uint32_t sync_offset = ((received_msg.rx2 - received_msg.tx1) + (received_msg.tx2 - received_msg.rx1)) / 2;
+        printf("%lu\n", (unsigned long)sync_offset);
+
+        sync_active = false;
+        stored_tx1 = 0;
+        stored_tx2 = 0;
+    }
 }
