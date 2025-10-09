@@ -124,7 +124,6 @@ int cmd_sync(int argc, char **argv)
     }
 
     uint16_t conn_handle = (uint16_t)atoi(argv[1]);
-
     int rc = start_sync(conn_handle);
     if (rc == 0) {
         // printf("Sync started for handle %d\n", conn_handle);
@@ -132,6 +131,49 @@ int cmd_sync(int argc, char **argv)
     else {
         printf("Failed to start sync for handle %d\n", conn_handle);
     }
+
+    return (rc == 0) ? 0 : 1;
+}
+
+int cmd_update(int argc, char **argv)
+{
+    if (argc != 3) {
+        puts("usage: update <conn_handle> <conn_interval>");
+        puts("  conn_handle: connection handle number");
+        puts("  conn_interval: connection interval in units of 1.25ms (min: 6, max: 3200)");
+        return 1;
+    }
+
+    uint16_t conn_handle = (uint16_t)atoi(argv[1]);
+    uint16_t conn_interval = (uint16_t)atoi(argv[2]);
+
+    /* Validate connection interval (6-3200 units of 1.25ms) */
+    if (conn_interval < 6 || conn_interval > 3200) {
+        printf("Error: connection interval must be between 6 and 3200 (7.5ms to 4000ms)\n");
+        return 1;
+    }
+
+    /* Set up connection parameters */
+    struct ble_gap_upd_params params = {
+        .itvl_min = BLE_GAP_CONN_ITVL_MS(conn_interval),
+        .itvl_max = BLE_GAP_CONN_ITVL_MS(conn_interval),
+        .latency = 0,
+        .supervision_timeout = BLE_GAP_SUPERVISION_TIMEOUT_MS(20 * conn_interval),
+        .min_ce_len = 0,
+        .max_ce_len = 0,
+    };
+
+    printf("Updating connection %d to interval %d\n",
+           conn_handle, conn_interval);
+
+    int rc = ble_gap_update_params(conn_handle, &params);
+    if (rc == 0) {
+        printf("Connection parameter update initiated successfully\n");
+    }
+    else {
+        printf("Failed to update connection parameters: %d\n", rc);
+    }
+
     return (rc == 0) ? 0 : 1;
 }
 
@@ -145,6 +187,7 @@ static const shell_command_t shell_commands[] = {
     { "rm", "Remove BLE address", cmd_rm },
     { "list", "List connections", cmd_list },
     { "sync", "Start time synchronization with handle", cmd_sync },
+    { "update", "Update connection parameters", cmd_update },
     { NULL, NULL, NULL }
 };
 

@@ -53,6 +53,14 @@ int cmd_list(int argc, char **argv);
 int cmd_sync(int argc, char **argv);
 
 /**
+ * @brief Update connection parameters for a specific connection
+ * @param argc Argument count
+ * @param argv Argument vector
+ * @return 0 on success, 1 on error
+ */
+int cmd_update(int argc, char **argv);
+
+/**
  * @brief Get shell commands array
  * @return Pointer to shell commands array
  */

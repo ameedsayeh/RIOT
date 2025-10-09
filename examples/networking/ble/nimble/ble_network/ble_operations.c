@@ -193,6 +193,12 @@ int advertise_callback(struct ble_gap_event *event, void *arg)
         timestamp = ztimer_now(ZTIMER_MSEC);
         handle_sync_rx_event(event->notify_rx.conn_handle, event->notify_rx.om, timestamp);
         break;
+    case BLE_GAP_EVENT_CONN_UPDATE_REQ:
+        printf("Connection update request received\n");
+        break;
+    case BLE_GAP_EVENT_CONN_UPDATE:
+        printf("Connection updated\n");
+        break;
     default:
         break;
     }
@@ -234,6 +240,12 @@ int connect_callback(struct ble_gap_event *event, void *arg)
         /* Record timestamp when notification was received */
         timestamp = ztimer_now(ZTIMER_MSEC);
         handle_sync_rx_event(event->notify_rx.conn_handle, event->notify_rx.om, timestamp);
+        break;
+    case BLE_GAP_EVENT_CONN_UPDATE_REQ:
+        printf("Connection update request received\n");
+        break;
+    case BLE_GAP_EVENT_CONN_UPDATE:
+        printf("Connection updated\n");
         break;
     default:
         break;
